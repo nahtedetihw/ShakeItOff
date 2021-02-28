@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>items</key>
+	<array>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>default</key>
+			<false/>
+			<key>defaults</key>
+			<string>com.nahtedetihw.shakeitoffprefs</string>
+			<key>key</key>
+			<string>enable</string>
+			<key>label</key>
+			<string>Enable</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string></string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSLinkListCell</string>
+			<key>default</key>
+			<string>0</string>
+			<key>defaults</key>
+			<string>com.nahtedetihw.shakeitoffprefs</string>
+			<key>detail</key>
+			<string>PSListItemsController</string>
+			<key>key</key>
+			<string>shakeSelection</string>
+			<key>label</key>
+			<string>Shake Selection</string>
+			<key>validValues</key>
+			<array>
+				<string>0</string>
+				<string>1</string>
+				<string>2</string>
+				<string>3</string>
+				<string>4</string>
+				<string>5</string>
+				<string>6</string>
+				<string>7</string>
+				<string>8</string>
+				<string>9</string>
+				<string>10</string>
+				<string>11</string>
+				<string>12</string>
+				<string>13</string>
+				<string>14</string>
+				<string>15</string>
+			</array>
+			<key>validTitles</key>
+			<array>
+				<string>Flashlight</string>
+				<string>Respring</string>
+				<string>Safe Mode</string>
+				<string>Dark Mode</string>
+				<string>Low Power Mode</string>
+				<string>Sound</string>
+				<string>Lock Screen</string>
+				<string>Previous Song</string>
+				<string>Play/Pause Song</string>
+				<string>Next Song</string>
+				<string>Reachability</string>
+				<string>Open Now Playing App</string>
+				<string>Take Screenshot</string>
+				<string>Airplane Mode</string>
+				<string>Control Center</string>
+				<string>WiFi</string>
+			</array>
+			<key>PostNotification</key>
+			<string>com.nahtedetihw.shakeitoffprefs/ReloadPrefs</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>Respring not necessary :)</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>Contact</string>
+		</dict>
+		<dict>
+			<key>cellClass</key>
+			<string>HBTwitterCell</string>
+			<key>label</key>
+			<string>ETHN</string>
+			<key>user</key>
+			<string>EthanWhited</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>footerAlignment</key>
+			<string>1</string>
+			<key>footerText</key>
+			<string>ShakeItOff</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>footerAlignment</key>
+			<string>1.0</string>
+			<key>footerText</key>
+			<string>2021 © nahtedetihw</string>
+		</dict>
+	</array>
+	<key>title</key>
+	<string></string>
+</dict>
+</plist>
