@@ -96,12 +96,17 @@ UIViewController *popController;
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     tableView.tableHeaderView = self.headerView;
+    UITableViewCell *cell = [tableView cellForRowAtIndexPath:indexPath];
+    [cell setAccessoryType:UITableViewCellAccessoryDisclosureIndicator];
     return [super tableView:tableView cellForRowAtIndexPath:indexPath];
 }
 
 - (void)viewDidLoad {
 
     [super viewDidLoad];
+    
+    _table.allowsMultipleSelection = YES;
+    _table.allowsMultipleSelectionDuringEditing = YES;
 
     self.headerView = [[UIView alloc] initWithFrame:CGRectMake(0,0,200,200)];
     self.headerImageView = [[UIImageView alloc] initWithFrame:CGRectMake(0,0,200,200)];

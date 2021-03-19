@@ -53,6 +53,11 @@
 				<string>13</string>
 				<string>14</string>
 				<string>15</string>
+				<string>16</string>
+				<string>17</string>
+				<string>18</string>
+				<string>19</string>
+				<string>20</string>
 			</array>
 			<key>validTitles</key>
 			<array>
@@ -72,6 +77,11 @@
 				<string>Airplane Mode</string>
 				<string>Control Center</string>
 				<string>WiFi</string>
+				<string>Battery</string>
+				<string>Noise Cancellation</string>
+				<string>Orientation Lock</string>
+				<string>Bluetooth</string>
+				<string>Ringer</string>
 			</array>
 			<key>PostNotification</key>
 			<string>com.nahtedetihw.shakeitoffprefs/ReloadPrefs</string>
@@ -81,6 +91,18 @@
 			<string>PSGroupCell</string>
 			<key>label</key>
 			<string>Respring not necessary :)</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>default</key>
+			<false/>
+			<key>defaults</key>
+			<string>com.nahtedetihw.shakeitoffprefs</string>
+			<key>key</key>
+			<string>enableNoiseCancellationBanners</string>
+			<key>label</key>
+			<string>Enable Banners for Noise Cancellation</string>
 		</dict>
 		<dict>
 			<key>cell</key>
@@ -102,13 +124,13 @@
 			<key>footerAlignment</key>
 			<string>1</string>
 			<key>footerText</key>
-			<string>ShakeItOff</string>
+			<string>ShakeItOff 1.2</string>
 		</dict>
 		<dict>
 			<key>cell</key>
 			<string>PSGroupCell</string>
 			<key>footerAlignment</key>
-			<string>1.0</string>
+			<string>1</string>
 			<key>footerText</key>
 			<string>2021 © nahtedetihw</string>
 		</dict>

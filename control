@@ -1,6 +1,6 @@
 Package: com.nahtedetihw.shakeitoff
 Name: ShakeItOff
-Version: 1.0
+Version: 1.2
 Architecture: iphoneos-arm
 Description: Shake your device and toggle some stuff!
 Maintainer: Ethan Whited

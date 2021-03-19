@@ -1,83 +1,67 @@
-// Originl tweak ShakeLight by KritantaDev
-// https://github.com/KritantaDev/ShakeLight
-
-#import <UIKit/UIKit.h>
-#import <AVKit/AVKit.h>
-#import <AudioToolbox/AudioServices.h>
-#import <Preferences/PSListController.h>
-#import <Preferences/PSSpecifier.h>
-#import <CepheiPrefs/HBRootListController.h>
-#import <CepheiPrefs/HBAppearanceSettings.h>
-#import <Cephei/HBPreferences.h>
-#import <spawn.h>
-#import "MediaRemote.h"
+#import "Tweak.h"
 
 BOOL enable;
+BOOL enableNoiseCancellationBanners;
+NSInteger listeningMode;
 NSInteger shakeSelection;
 HBPreferences *preferences;
+static BBServer *bbServer = nil;
 
-@interface UISUserInterfaceStyleMode : NSObject
-@property (nonatomic, assign) long long modeValue;
-@end
+static dispatch_queue_t getBBServerQueue() {
 
-@interface _CDBatterySaver
--(id)batterySaver;
--(BOOL)setPowerMode:(long long)arg1 error:(id *)arg2;
-@end
+    static dispatch_queue_t queue;
+    static dispatch_once_t predicate;
 
-@interface SBVolumeControl
-+(id)sharedInstance;
--(void)setActiveCategoryVolume:(float)arg1 ;
--(float)_effectiveVolume;
--(void)toggleMute;
--(void)_updateEffectiveVolume:(float)arg1;
-@end
+    dispatch_once(&predicate, ^{
+    void* handle = dlopen(NULL, RTLD_GLOBAL);
+        if (handle) {
+            dispatch_queue_t __weak *pointer = (__weak dispatch_queue_t *) dlsym(handle, "__BBServerQueue");
+            if (pointer) queue = *pointer;
+            dlclose(handle);
+        }
+    });
 
-@interface SpringBoard : NSObject
--(void)_runBottomEdgeSwipeTestFromHomeScreen:(BOOL)arg1;
--(void)_simulateLockButtonPress;
--(void)takeScreenshot;
-@end
+    return queue;
 
-@interface SBReachabilityManager : NSObject
-+(id)sharedInstance;
--(void)toggleReachability;
--(BOOL)reachabilityModeActive;
-@end
+}
 
-@interface SBApplication : NSObject
-@property (nonatomic, readonly) NSString *bundleIdentifier;
-@end
+static void fakeNotification(NSString *sectionID, NSDate *date, NSString *message, bool banner) {
+    
+    BBBulletin* bulletin = [[%c(BBBulletin) alloc] init];
 
-@interface LSApplicationWorkspace : NSObject
-+(id)defaultWorkspace;
--(void)openApplicationWithBundleIdentifier:(id)arg1 configuration:(id)arg2 completionHandler:(/*^block*/id)arg3 ;
-@end
+    bulletin.title = @"Bluetooth listening mode:";
+    bulletin.message = message;
+    bulletin.sectionID = sectionID;
+    bulletin.bulletinID = [[NSProcessInfo processInfo] globallyUniqueString];
+    bulletin.recordID = [[NSProcessInfo processInfo] globallyUniqueString];
+    bulletin.publisherBulletinID = [[NSProcessInfo processInfo] globallyUniqueString];
+    bulletin.date = date;
+    bulletin.defaultAction = [%c(BBAction) actionWithLaunchBundleID:sectionID callblock:nil];
+    bulletin.clearable = YES;
+    bulletin.showsMessagePreview = YES;
+    bulletin.publicationDate = date;
+    bulletin.lastInterruptDate = date;
 
-@interface SBMediaController : NSObject
-+(id)sharedInstance;
-@property (nonatomic) SBApplication *nowPlayingApplication;
-@property (nonatomic,readonly) NSString * displayName;
-@end
+    if (banner) {
+        if ([bbServer respondsToSelector:@selector(publishBulletin:destinations:)]) {
+            dispatch_sync(getBBServerQueue(), ^{
+                [bbServer publishBulletin:bulletin destinations:15];
+            });
+        }
+    }
+}
 
-@interface SBWiFiManager : NSObject
-+(id)sharedInstance;
--(void)setWiFiEnabled:(BOOL)arg1 ;
--(BOOL)wiFiEnabled;
-@end
+void noiseCancelTestBanner() {
+    fakeNotification(@"com.apple.Music", [NSDate date], @"Active Noise Cancellation Mode", true);
+}
 
-@interface RadiosPreferences : NSObject
-- (BOOL)airplaneMode;
-- (void)setAirplaneMode:(BOOL)arg1;
-- (void)synchronize;
-@end
+void transparencyTestBanner() {
+    fakeNotification(@"com.apple.Music", [NSDate date], @"Transparency Mode", true);
+}
 
-@interface SBControlCenterController : UIViewController
-+(id)sharedInstance;
--(BOOL)isVisible;
--(void)presentAnimated:(BOOL)arg1 completion:(/*^block*/id)arg2;
--(void)dismissAnimated:(BOOL)arg1 completion:(/*^block*/id)arg2;
-@end
+void normalTestBanner() {
+    fakeNotification(@"com.apple.Music", [NSDate date], @"Normal Mode", true);
+}
 
 void toggleFlashlight() {
     AVCaptureDevice *flashLight = [AVCaptureDevice defaultDeviceWithMediaType:AVMediaTypeVideo];
@@ -209,11 +193,68 @@ void toggleWiFi() {
     AudioServicesPlaySystemSound(1519);
 }
 
+void toggleBattery() {
+    if ([((SBLockScreenManager *)[%c(SBLockScreenManager) sharedInstance]).coverSheetViewController _isShowingChargingModal] == NO) {
+        [((SBLockScreenManager *)[%c(SBLockScreenManager) sharedInstance]).coverSheetViewController _transitionChargingViewToVisible:YES showBattery:YES animated:YES];
+    } else {
+        [((SBLockScreenManager *)[%c(SBLockScreenManager) sharedInstance]).coverSheetViewController dismissViewControllerAnimated:YES completion:nil];
+    }
+    AudioServicesPlaySystemSound(1519);
+}
+
+void toggleNoiseCancellation() {
+    if (listeningMode == 0) {
+        [[[[[[%c(SBMediaController) sharedInstance] valueForKey:@"_routingController"] pickedRoute] logicalLeaderOutputDevice] valueForKey:@"_avOutputDevice"] setCurrentBluetoothListeningMode:@"AVOutputDeviceBluetoothListeningModeAudioTransparency"];
+        listeningMode = 1;
+        if (enableNoiseCancellationBanners) transparencyTestBanner();
+    } else if (listeningMode == 1) {
+    [[[[[[%c(SBMediaController) sharedInstance] valueForKey:@"_routingController"] pickedRoute] logicalLeaderOutputDevice] valueForKey:@"_avOutputDevice"] setCurrentBluetoothListeningMode:@"AVOutputDeviceBluetoothListeningModeActiveNoiseCancellation"];
+        listeningMode = 2;
+        if (enableNoiseCancellationBanners) noiseCancelTestBanner();
+    } else if (listeningMode == 2) {
+    [[[[[[%c(SBMediaController) sharedInstance] valueForKey:@"_routingController"] pickedRoute] logicalLeaderOutputDevice] valueForKey:@"_avOutputDevice"] setCurrentBluetoothListeningMode:@"AVOutputDeviceBluetoothListeningModeNormal"];
+        listeningMode = 0;
+        if (enableNoiseCancellationBanners) normalTestBanner();
+        }
+    AudioServicesPlaySystemSound(1519);
+}
+
+void toggleOrientationLock() {
+    if ([[%c(SBOrientationLockManager) sharedInstance] isUserLocked] == YES) {
+        [[%c(SBOrientationLockManager) sharedInstance] unlock];
+    } else {
+        [[%c(SBOrientationLockManager) sharedInstance] lock];
+    }
+    AudioServicesPlaySystemSound(1519);
+}
+
+void toggleBluetooth() {
+    if ([[%c(BluetoothManager) sharedInstance] enabled] == NO) {
+        [[%c(BluetoothManager) sharedInstance] setEnabled:YES];
+    } else {
+        [[%c(BluetoothManager) sharedInstance] setEnabled:NO];
+    }
+    AudioServicesPlaySystemSound(1519);
+}
+
+void toggleRinger() {
+    if ([((SBMainWorkspace *)[%c(SBMainWorkspace) sharedInstance]).ringerControl isRingerMuted] == NO) {
+        [((SBMainWorkspace *)[%c(SBMainWorkspace) sharedInstance]).ringerControl setRingerMuted:YES];
+        [((SBMainWorkspace *)[%c(SBMainWorkspace) sharedInstance]).ringerControl activateRingerHUDFromMuteSwitch:0];
+    } else {
+        [((SBMainWorkspace *)[%c(SBMainWorkspace) sharedInstance]).ringerControl setRingerMuted:NO];
+        [((SBMainWorkspace *)[%c(SBMainWorkspace) sharedInstance]).ringerControl activateRingerHUDFromMuteSwitch:1];
+    }
+    AudioServicesPlaySystemSound(1519);
+}
+
 %group ShakeItOff
-%hook UIResponder
+
+%hook UIWindow
 - (void)motionEnded:(UIEventSubtype)motion withEvent:(UIEvent *)event {
     %orig;
-    if(event.type == UIEventSubtypeMotionShake && self == [[UIApplication sharedApplication] keyWindow]) {
+    BOOL isScreenOn = MSHookIvar<BOOL>([%c(SBLockScreenManager) sharedInstance], "_isScreenOn");
+    if (event.type == UIEventSubtypeMotionShake && self == [[UIApplication sharedApplication] keyWindow] && isScreenOn == YES) {
         switch (shakeSelection) {
             case 0:
                 toggleFlashlight();
@@ -278,21 +319,74 @@ void toggleWiFi() {
             case 15:
                 toggleWiFi();
             break;
+                
+            case 16:
+                toggleBattery();
+            break;
+                
+            case 17:
+                toggleNoiseCancellation();
+            break;
+                
+            case 18:
+                toggleOrientationLock();
+            break;
+                
+            case 19:
+                toggleBluetooth();
+            break;
+                
+            case 20:
+                toggleRinger();
+            break;
         }
     }
 }
 
 %end
+
+%hook BBServer
+
+- (id)initWithQueue:(id)arg1 {
+
+    bbServer = %orig;
+    
+    return bbServer;
+
+}
+
+- (id)initWithQueue:(id)arg1 dataProviderManager:(id)arg2 syncService:(id)arg3 dismissalSyncCache:(id)arg4 observerListener:(id)arg5 utilitiesListener:(id)arg6 conduitListener:(id)arg7 systemStateListener:(id)arg8 settingsListener:(id)arg9 {
+    
+    bbServer = %orig;
+
+    return bbServer;
+
+}
+
+- (void)dealloc {
+
+    if (bbServer == self) bbServer = nil;
+
+    %orig;
+
+}
+
+%end
+
 %end
 
 %ctor {
     preferences = [[HBPreferences alloc] initWithIdentifier:@"com.nahtedetihw.shakeitoffprefs"];
     [preferences registerBool:&enable default:NO forKey:@"enable"];
+    [preferences registerBool:&enableNoiseCancellationBanners default:NO forKey:@"enableNoiseCancellationBanners"];
     [preferences registerInteger:&shakeSelection default:0 forKey:@"shakeSelection"];
 
     if (enable) {
         %init(ShakeItOff);
         return;
+        CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, (CFNotificationCallback)noiseCancelTestBanner, (CFStringRef)@"com.nahtedetihw.shakeitoff/NoiseCancel", NULL, (CFNotificationSuspensionBehavior)kNilOptions);
+        CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, (CFNotificationCallback)transparencyTestBanner, (CFStringRef)@"com.nahtedetihw.shakeitoff/Transparency", NULL, (CFNotificationSuspensionBehavior)kNilOptions);
+        CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, (CFNotificationCallback)normalTestBanner, (CFStringRef)@"com.nahtedetihw.shakeitoff/Normal", NULL, (CFNotificationSuspensionBehavior)kNilOptions);
     }
     return;
 }
